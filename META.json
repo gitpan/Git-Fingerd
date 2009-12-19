@@ -1,0 +1,27 @@
+{
+   "resources" : {
+      "repository" : "http://github.com/rjbs/git-fingerd"
+   },
+   "meta-spec" : {
+      "version" : 1.4,
+      "url" : "http://module-build.sourceforge.net/META-spec-v1.4.html"
+   },
+   "generated_by" : "Dist::Zilla version 1.093400",
+   "version" : "2.093520",
+   "name" : "Git-Fingerd",
+   "author" : [
+      "Ricardo SIGNES <rjbs@cpan.org>"
+   ],
+   "license" : "perl",
+   "requires" : {
+      "List::Util" : "0",
+      "Text::Table" : "0",
+      "String::Truncate" : "0",
+      "Net::Finger::Server" : "0.003",
+      "Path::Class" : "0",
+      "SUPER" : "0",
+      "Git::PurePerl" : "0"
+   },
+   "abstract" : "let people finger your git server for... some reason"
+}
+

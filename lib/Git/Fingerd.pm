@@ -1,13 +1,14 @@
 use strict;
 use warnings;
 package Git::Fingerd;
-our $VERSION = '1.000';
-
+our $VERSION = '2.093520';
 use Net::Finger::Server 0.003;
 BEGIN { our @ISA = qw(Net::Finger::Server); }
 # ABSTRACT: let people finger your git server for... some reason
 
+use Git::PurePerl;
 use List::Util qw(max);
+use Path::Class;
 use SUPER;
 use String::Truncate qw(elide);
 use Text::Table;
@@ -64,29 +65,56 @@ sub user_reply {
   my ($self, $username, $arg) = @_;
 
   my $basedir = $self->basedir;
-  my $dir = "$basedir/$username.git";
+  my $gitdir  = "$basedir/$username.git";
 
-  return "unknown repository\n" unless -d $dir;
+  return "unknown repository\n" unless -d $gitdir;
 
-  my $mode = (stat $dir)[2];
+  my $mode = (stat $gitdir)[2];
 
   return "unknown repository\n" unless $mode & 1;
 
-  my $cloneurl = -f "$dir/cloneurl"    ? `cat $dir/cloneurl`    : '(none)';
-  my $desc     = -f "$dir/description" ? `cat $dir/description` : '(none)';
+  my $repo    = Git::PurePerl->new({ gitdir => $gitdir });
+
+  my $cloneurl = file( $gitdir, 'cloneurl' )->slurp( chomp => 1 );
+  my $desc     = $repo->description;
   chomp($cloneurl, $desc);
+
+  my @refs = $repo->ref_names;
+  my @tags  = grep { s{^refs/tags/}{} } @refs;
+  my @heads = grep { s{^refs/heads/}{} } @refs;
 
   my $reply = "Project  : $username
 Desc.    : $desc
 Clone URL: $cloneurl
 ";
 
+  $reply .= "\n[heads]\n";
+  for my $head (sort @heads) {
+    my $sha = $repo->ref_sha1("refs/heads/$head");
+    $reply .= sprintf "%-15s = %s\n", $head, $sha;
+  }
+
+  $reply .= "\n[tags]\n";
+  for my $tag (sort @tags) {
+    my $sha = $repo->ref_sha1("refs/tags/$tag");
+    $reply .= sprintf "%-15s = %s\n", $tag, $sha;
+  }
+
+  if (my $ref = $repo->ref("refs/heads/master")) {
+    my $tree = $ref->tree;
+    for ($tree->directory_entries) {
+      next unless $_->filename eq 'README';
+      my $obj = $_->object;
+      $reply .= "\n[README]\n" . $obj->content . "\n";
+    }
+  }
+
   return $reply;
 }
 
+1;
 
 __END__
-
 =pod
 
 =head1 NAME
@@ -95,7 +123,7 @@ Git::Fingerd - let people finger your git server for... some reason
 
 =head1 VERSION
 
-version 1.000
+version 2.093520
 
 =head1 DESCRIPTION
 
@@ -108,22 +136,15 @@ This was meant to provide a simple example for Net::Finger::Server, but enough
 people asked for the code that I've released it as something reusable.  Here's
 an example program using Git::Fingerd:
 
-    #!/usr/bin/perl
-    use Git::Fingerd -run => {
-      isa     => 'Net::Server::INET',
-      basedir => '/var/lib/git',
-    };
+  #!/usr/bin/perl
+  use Git::Fingerd -run => {
+    isa     => 'Net::Server::INET',
+    basedir => '/var/lib/git',
+  };
 
 This program could then run out of F<xinetd>.
 
-=begin Pod::Coverage
-
-    new
-    basedir
-
-=end Pod::Coverage
-
-1;
+=for Pod::Coverage new basedir
 
 =head1 AUTHOR
 
@@ -131,11 +152,10 @@ This program could then run out of F<xinetd>.
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2008 by Ricardo SIGNES.
+This software is copyright (c) 2009 by Ricardo SIGNES.
 
 This is free software; you can redistribute it and/or modify it under
-the same terms as perl itself.
+the same terms as the Perl 5 programming language system itself.
 
-=cut 
-
+=cut
 
