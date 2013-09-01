@@ -1,7 +1,9 @@
 use strict;
 use warnings;
 package Git::Fingerd;
-our $VERSION = '2.093520';
+{
+  $Git::Fingerd::VERSION = '2.093521';
+}
 use Net::Finger::Server 0.003;
 BEGIN { our @ISA = qw(Net::Finger::Server); }
 # ABSTRACT: let people finger your git server for... some reason
@@ -115,6 +117,7 @@ Clone URL: $cloneurl
 1;
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -123,7 +126,7 @@ Git::Fingerd - let people finger your git server for... some reason
 
 =head1 VERSION
 
-version 2.093520
+version 2.093521
 
 =head1 DESCRIPTION
 
@@ -148,14 +151,13 @@ This program could then run out of F<xinetd>.
 
 =head1 AUTHOR
 
-  Ricardo SIGNES <rjbs@cpan.org>
+Ricardo SIGNES <rjbs@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2009 by Ricardo SIGNES.
+This software is copyright (c) 2013 by Ricardo SIGNES.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
